@@ -198,10 +198,15 @@ export default function AgencyHero() {
     hidden: {},
     show: { transition: { staggerChildren: 0.13, delayChildren: 0.25 } },
   }
+  const easeOut = [0.16, 1, 0.3, 1] as const
   const item = {
     hidden: { opacity: 0, y: 44, filter: 'blur(8px)' },
-    show:   { opacity: 1, y: 0,  filter: 'blur(0px)',
-      transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } },
+    show: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: { duration: 0.9, ease: easeOut },
+    },
   }
 
   return (
