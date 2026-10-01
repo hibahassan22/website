@@ -1,36 +1,41 @@
 import { useEffect, useRef, useState } from 'react'
+import type { PointerEvent } from 'react'
 import {
-  motion, AnimatePresence,
-  useMotionValue, useSpring, useTransform,
+  motion, AnimatePresence, useMotionValue, useSpring, useTransform, useScroll,
 } from 'framer-motion'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import type { MotionValue } from 'framer-motion'
+import { Check, Gauge, Rocket, Search } from 'lucide-react'
 import heroBg from '../../assets/imgi_90_WhatsApp-Image-2026-08-18-at-4.33.07-PM.jpg'
+import { ButtonLink } from '../components/ui/Button'
+import { SplitWords } from '../components/ui/Reveal'
+import { EASE_OUT } from '../lib/motion'
 
-/* ── Word cycler ── */
 const words = ['نطوّر', 'ننفّذ', 'نسوّق', 'نبدع', 'نبتكر']
+
+const bullets = [
+  'تسليم المشاريع في الوقت المحدد دائماً',
+  'دعم فني متكامل ٢٤ ساعة طوال العام',
+  'فريق متخصص في البرمجة والتسويق الرقمي',
+]
+
+const bars = [38, 52, 44, 63, 58, 72, 66, 81, 77, 88, 84, 96]
 
 function WordCycler() {
   const [idx, setIdx] = useState(0)
   useEffect(() => {
-    const t = setInterval(() => setIdx(i => (i + 1) % words.length), 2400)
+    const t = setInterval(() => setIdx(i => (i + 1) % words.length), 2600)
     return () => clearInterval(t)
   }, [])
   return (
-    <span className="relative inline-block overflow-hidden" style={{ verticalAlign: 'bottom', minWidth: 120 }}>
-      <AnimatePresence mode="wait">
+    <span className="relative inline-flex overflow-hidden align-bottom min-w-[4.5ch] h-[1.5em]" aria-live="polite">
+      <AnimatePresence mode="popLayout" initial={false}>
         <motion.span
           key={idx}
-          initial={{ y: 60, opacity: 0, filter: 'blur(10px)' }}
-          animate={{ y: 0,   opacity: 1, filter: 'blur(0px)' }}
-          exit={{   y: -60,  opacity: 0, filter: 'blur(10px)' }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-block"
-          style={{
-            background: 'linear-gradient(135deg,#c9a84c 0%,#e8c97a 45%,#fff7e0 65%,#c9a84c 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
+          className="text-gold inline-block"
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: '0%', opacity: 1 }}
+          exit={{ y: '-100%', opacity: 0 }}
+          transition={{ duration: 0.6, ease: EASE_OUT }}
         >
           {words[idx]}
         </motion.span>
@@ -39,451 +44,252 @@ function WordCycler() {
   )
 }
 
-/* ── Animated counter ── */
-function AnimCounter({ to, suffix = '' }: { to: number; suffix?: string }) {
-  const [val, setVal] = useState(0)
-  useEffect(() => {
-    let cur = 0
-    const step = () => {
-      cur += Math.ceil(to / 45)
-      if (cur >= to) { setVal(to); return }
-      setVal(cur); requestAnimationFrame(step)
-    }
-    const t = setTimeout(() => requestAnimationFrame(step), 900)
-    return () => clearTimeout(t)
-  }, [to])
-  return <>{val}{suffix}</>
-}
-
-/* ── Custom cursor ── */
-function CursorOrbit({ mx, my }: {
-  mx: import('framer-motion').MotionValue<number>
-  my: import('framer-motion').MotionValue<number>
-}) {
-  const ox = useSpring(mx, { stiffness: 110, damping: 18 })
-  const oy = useSpring(my, { stiffness: 110, damping: 18 })
-  const ix = useSpring(mx, { stiffness: 220, damping: 16 })
-  const iy = useSpring(my, { stiffness: 220, damping: 16 })
-  return (
-    <>
-      <motion.div className="fixed pointer-events-none z-[9999] top-0 left-0 rounded-full"
-        style={{
-          x: ox, y: oy, translateX: '-50%', translateY: '-50%',
-          width: 44, height: 44,
-          border: '1.5px solid rgba(201,168,76,0.8)',
-          boxShadow: '0 0 18px rgba(201,168,76,0.35)',
-        }}
-      >
-        <motion.div className="absolute inset-0 rounded-full"
-          style={{ border: '1px dashed rgba(201,168,76,0.4)' }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
-        />
-      </motion.div>
-      <motion.div className="fixed pointer-events-none z-[9999] top-0 left-0 rounded-full"
-        style={{
-          x: ix, y: iy, translateX: '-50%', translateY: '-50%',
-          width: 7, height: 7,
-          background: '#e8c97a',
-          boxShadow: '0 0 14px rgba(232,201,122,1)',
-        }}
-      />
-    </>
-  )
-}
-
-/* ── Particle ── */
-function Particle({ x, y, size, dur, delay, color }: {
-  x: number; y: number; size: number; dur: number; delay: number; color: string
-}) {
-  return (
-    <motion.div className="absolute rounded-full pointer-events-none"
-      style={{ left: `${x}%`, top: `${y}%`, width: size, height: size, background: color }}
-      animate={{ y: [0, -35, 0], opacity: [0, 1, 0], scale: [0.3, 1, 0.3] }}
-      transition={{ duration: dur, delay, repeat: Infinity, ease: 'easeInOut' }}
-    />
-  )
-}
-
-/* ── Energy line ── */
-function EnergyLine({ y, delay, dur }: { y: number; delay: number; dur: number }) {
-  return (
-    <motion.div className="absolute pointer-events-none h-px inset-x-0"
-      style={{
-        top: `${y}%`,
-        background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.55),rgba(232,201,122,0.9),rgba(201,168,76,0.55),transparent)',
-        boxShadow: '0 0 10px rgba(201,168,76,0.4)',
-      }}
-      initial={{ scaleX: 0, opacity: 0, originX: 0 }}
-      animate={{ scaleX: [0, 1, 1, 0], opacity: [0, 1, 0.7, 0] }}
-      transition={{ duration: dur, delay, repeat: Infinity, repeatDelay: Math.random() * 3 + 2, ease: 'easeInOut' }}
-    />
-  )
-}
-
-/* ── Scan line ── */
-function ScanLine() {
-  return (
-    <motion.div className="absolute inset-x-0 h-px pointer-events-none"
-      style={{
-        background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent)',
-        boxShadow: '0 0 12px rgba(201,168,76,0.3)',
-      }}
-      animate={{ top: ['0%', '100%'] }}
-      transition={{ duration: 9, repeat: Infinity, ease: 'linear' }}
-    />
-  )
-}
-
-/* ── Corner deco ── */
-function Corner({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
-  const map = {
-    tl: 'top-5 left-5 border-t-2 border-l-2',
-    tr: 'top-5 right-5 border-t-2 border-r-2',
-    bl: 'bottom-14 left-5 border-b-2 border-l-2',
-    br: 'bottom-14 right-5 border-b-2 border-r-2',
+function useDepth(sx: MotionValue<number>, sy: MotionValue<number>, depth: number) {
+  return {
+    x: useTransform(sx, v => v * depth),
+    y: useTransform(sy, v => v * depth),
   }
+}
+
+function HeroVisual({ sx, sy }: { sx: MotionValue<number>; sy: MotionValue<number> }) {
+  const plate = useDepth(sx, sy, -10)
+  const panel = useDepth(sx, sy, 16)
+  const chipA = useDepth(sx, sy, 30)
+  const chipB = useDepth(sx, sy, 42)
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.2 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 1.8, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={`absolute w-8 h-8 pointer-events-none ${map[pos]}`}
-      style={{ borderColor: 'rgba(201,168,76,0.5)' }}
-    />
-  )
-}
+      className="relative mx-auto w-full max-w-[540px] aspect-[5/4] lg:aspect-[4/5]"
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 1.1, ease: EASE_OUT, delay: 0.5 }}
+    >
+      {/* Image plate */}
+      <motion.div style={plate} className="absolute inset-0 rounded-[28px] overflow-hidden border border-white/10 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+        <img src={heroBg} alt="" className="w-full h-full object-cover object-[22%_center] scale-110" />
+        <div className="absolute inset-0 bg-linear-to-t from-ink-950 via-ink-950/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-l from-ink-950/30 to-transparent" />
+      </motion.div>
 
-/* ══════════════════════════════════════
-   MAIN
-══════════════════════════════════════ */
-export default function AgencyHero() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const gx = useMotionValue(0)
-  const gy = useMotionValue(0)
-  const mx = useMotionValue(0)
-  const my = useMotionValue(0)
-  const sx = useSpring(mx, { stiffness: 28, damping: 20 })
-  const sy = useSpring(my, { stiffness: 28, damping: 20 })
-  const imgX = useTransform(sx, [-600, 600], [-22, 22])
-  const imgY = useTransform(sy, [-400, 400], [-12, 12])
-  const glowX = useTransform(sx, [-600, 600], ['38%', '62%'])
-  const glowY = useTransform(sy, [-400, 400], ['38%', '62%'])
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => { gx.set(e.clientX); gy.set(e.clientY) }
-    window.addEventListener('mousemove', move)
-    return () => window.removeEventListener('mousemove', move)
-  }, [gx, gy])
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect) return
-    mx.set(e.clientX - rect.left - rect.width / 2)
-    my.set(e.clientY - rect.top - rect.height / 2)
-  }
-
-  const particles = Array.from({ length: 55 }, (_, i) => ({
-    x: Math.random() * 100, y: Math.random() * 100,
-    size: 1 + Math.random() * 3,
-    dur: 3 + Math.random() * 5,
-    delay: Math.random() * 6,
-    color: i % 4 === 0 ? 'rgba(201,168,76,0.9)'
-         : i % 4 === 1 ? 'rgba(232,201,122,0.55)'
-         : i % 4 === 2 ? 'rgba(255,247,200,0.35)'
-         :                'rgba(255,255,255,0.18)',
-  }))
-
-  const stagger = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.13, delayChildren: 0.25 } },
-  }
-  const easeOut = [0.16, 1, 0.3, 1] as const
-  const item = {
-    hidden: { opacity: 0, y: 44, filter: 'blur(8px)' },
-    show: {
-      opacity: 1,
-      y: 0,
-      filter: 'blur(0px)',
-      transition: { duration: 0.9, ease: easeOut },
-    },
-  }
-
-  return (
-    <>
-      <CursorOrbit mx={gx} my={gy} />
-
-      <section
-        id="hero"
-        ref={containerRef}
-        onMouseMove={handleMouseMove}
-        className="relative min-h-screen flex items-center overflow-hidden"
+      {/* Dashboard panel */}
+      <motion.div
+        style={panel}
+        className="absolute inset-x-[6%] bottom-[7%] rounded-2xl glass-dark p-4 sm:p-5"
       >
-        {/* BG parallax */}
-        <motion.div style={{ x: imgX, y: imgY }} className="absolute inset-[-6%] -z-30">
-          <img src={heroBg} alt="" className="w-full h-full object-cover" />
-        </motion.div>
-
-        {/* Main overlay */}
-        <div className="absolute inset-0 -z-20"
-          style={{ background: 'linear-gradient(to bottom, rgba(3,5,14,0.82) 0%, rgba(3,5,14,0.72) 50%, rgba(3,5,14,0.92) 100%)' }}
-        />
-        {/* Center spotlight */}
-        <motion.div className="absolute inset-0 -z-20 pointer-events-none"
-          style={{
-            background: useTransform(
-              [glowX, glowY],
-              ([gxv, gyv]) => `radial-gradient(ellipse 55% 55% at ${gxv} ${gyv}, rgba(201,168,76,0.16) 0%, transparent 65%)`
-            ),
-          }}
-        />
-        {/* Vignette */}
-        <div className="absolute inset-0 -z-20 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 85% 85% at 50% 50%, transparent 40%, rgba(2,4,12,0.75) 100%)' }}
-        />
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 inset-x-0 h-52 -z-20"
-          style={{ background: 'linear-gradient(to bottom, transparent, var(--color-bg))' }}
-        />
-
-        {/* Particles */}
-        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
-          {particles.map((p, i) => <Particle key={i} {...p} />)}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1.5" dir="ltr">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
+            <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
+            <span className="w-2.5 h-2.5 rounded-full bg-gold-500/70" />
+          </div>
+          <span className="pill pill-dark !py-1 !text-[0.7rem]">
+            <span className="live-dot !w-1.5 !h-1.5" />
+            مباشر الآن
+          </span>
         </div>
 
-        {/* Energy lines */}
-        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
-          {[15, 30, 48, 63, 78, 90].map((y, i) => (
-            <EnergyLine key={i} y={y} delay={i * 1.1} dur={2.4 + i * 0.3} />
+        <div className="flex items-end justify-between gap-4 mb-3">
+          <div>
+            <p className="text-[0.75rem] text-fg-inv-subtle">مؤشر الأداء</p>
+            <p className="t-num text-2xl sm:text-3xl font-semibold text-fg-inv" dir="ltr">
+              98<span className="text-base text-fg-inv-subtle font-normal">/100</span>
+            </p>
+          </div>
+          <div className="text-[0.7rem] text-fg-inv-subtle t-num" dir="ltr">Q1 — Q4</div>
+        </div>
+
+        <div className="flex items-end gap-[5px] h-20 sm:h-24" dir="ltr" aria-hidden>
+          {bars.map((h, i) => (
+            <motion.span
+              key={i}
+              className={`flex-1 rounded-[4px] origin-bottom ${i === bars.length - 1 ? 'bg-linear-to-t from-gold-600 to-gold-300' : 'bg-white/[0.12]'}`}
+              style={{ height: `${h}%` }}
+              initial={{ scaleY: 0 }}
+              animate={{ scaleY: 1 }}
+              transition={{ duration: 0.9, ease: EASE_OUT, delay: 1 + i * 0.05 }}
+            />
           ))}
         </div>
 
-        {/* Scan line */}
-        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-20">
-          <ScanLine />
+        <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/[0.08]">
+          {[
+            { icon: Gauge,  label: 'الأداء',  value: '98' },
+            { icon: Search, label: 'SEO',     value: '100' },
+            { icon: Rocket, label: 'الجاهزية', value: '100' },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} className="flex items-center gap-2 min-w-0">
+              <Icon className="w-3.5 h-3.5 text-gold-400 shrink-0" aria-hidden />
+              <span className="text-[0.7rem] text-fg-inv-subtle truncate">{label}</span>
+              <span className="t-num text-[0.8rem] font-semibold text-fg-inv ms-auto">{value}</span>
+            </div>
+          ))}
         </div>
+      </motion.div>
 
-        {/* Pulsing rings */}
-        {[0, 0.9, 1.8].map((delay, i) => (
-          <motion.div key={i} className="absolute pointer-events-none rounded-full -z-10"
-            style={{
-              left: '50%', top: '50%',
-              width: 200 + i * 160, height: 200 + i * 160,
-              border: '1px solid rgba(201,168,76,0.12)',
-              translateX: '-50%', translateY: '-50%',
-            }}
-            animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0, 0.6] }}
-            transition={{ duration: 5, delay, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        ))}
+      {/* Floating chip — launch */}
+      <motion.div style={chipA} className="hidden sm:block absolute top-[9%] -right-[7%]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: EASE_OUT, delay: 1.3 }}
+        >
+          <div className="animate-float glass-dark rounded-2xl ps-3 pe-4 py-3 flex items-center gap-3">
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-linear-to-b from-gold-400 to-gold-600 text-ink-950">
+              <Check className="w-4 h-4" strokeWidth={3} aria-hidden />
+            </span>
+            <span className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-fg-inv">تم الإطلاق بنجاح</span>
+              <span className="text-[0.72rem] text-fg-inv-subtle">متجر إلكتروني · الآن</span>
+            </span>
+          </div>
+        </motion.div>
+      </motion.div>
 
-        {/* Corners */}
-        <Corner pos="tl" /><Corner pos="tr" />
-        <Corner pos="bl" /><Corner pos="br" />
+      {/* Floating chip — code */}
+      <motion.div style={chipB} className="hidden sm:block absolute top-[38%] -left-[8%]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: EASE_OUT, delay: 1.5 }}
+        >
+          <div className="animate-float [animation-delay:-3s] glass-dark rounded-xl px-4 py-2.5 font-mono text-[0.78rem] text-fg-inv-muted" dir="ltr">
+            <span className="text-gold-400">&lt;</span>Build
+            <span className="text-fg-inv"> fast</span>
+            <span className="text-gold-400"> /&gt;</span>
+          </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  )
+}
 
-        {/* ══ CONTENT ══ */}
-        <div className="ag-inner w-full px-6 pt-28 pb-24 relative z-10 flex justify-center">
-          <motion.div variants={stagger} initial="hidden" animate="show"
-            className="w-full max-w-3xl text-center"
-          >
+export default function AgencyHero() {
+  const ref = useRef<HTMLElement>(null)
+  const mx = useMotionValue(0)
+  const my = useMotionValue(0)
+  const sx = useSpring(mx, { stiffness: 50, damping: 18 })
+  const sy = useSpring(my, { stiffness: 50, damping: 18 })
+  const bgX = useTransform(sx, v => v * -18)
+  const bgY = useTransform(sy, v => v * -12)
 
-            {/* Badge */}
-            <motion.div variants={item} className="flex justify-center mb-8">
-              <motion.span
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase"
-                style={{
-                  background: 'rgba(201,168,76,0.1)',
-                  border: '1px solid rgba(201,168,76,0.35)',
-                  color: '#e8c97a',
-                }}
-                whileHover={{ scale: 1.06, background: 'rgba(201,168,76,0.18)' }}
-                transition={{ type: 'spring', stiffness: 400 }}
-              >
-                <motion.span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#c9a84c' }}
-                  animate={{ scale: [1, 1.7, 1], opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                وكالة رقمية متخصصة · منذ ٢٠٢٢
-              </motion.span>
-            </motion.div>
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, 140])
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0])
 
-            {/* H1 */}
-            <motion.h1 variants={item}
-              className="font-black leading-[1.2] mb-6"
-              style={{ color: '#f5f0e8', fontSize: 'clamp(1.8rem, 4vw, 3.2rem)' }}
+  const onPointerMove = (e: PointerEvent<HTMLElement>) => {
+    if (e.pointerType !== 'mouse') return
+    const r = e.currentTarget.getBoundingClientRect()
+    mx.set(((e.clientX - r.left) / r.width - 0.5) * 2)
+    my.set(((e.clientY - r.top) / r.height - 0.5) * 2)
+  }
+
+  return (
+    <section
+      id="hero"
+      ref={ref}
+      onPointerMove={onPointerMove}
+      className="relative isolate overflow-hidden bg-ink-950 text-fg-inv grain min-h-[100svh] flex items-center"
+    >
+      {/* Background */}
+      <motion.div style={{ x: bgX, y: bgY }} className="absolute -inset-[4%] -z-30" aria-hidden>
+        <img src={heroBg} alt="" className="w-full h-full object-cover opacity-[0.22]" fetchPriority="high" />
+      </motion.div>
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_80%_60%_at_70%_0%,rgba(29,37,71,0.9),transparent_70%)]" aria-hidden />
+      <div className="absolute -z-20 top-[-20%] left-[-10%] w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] rounded-full bg-gold-500/[0.13] blur-[120px] animate-aurora will-change-transform" aria-hidden />
+      <div className="absolute inset-0 -z-10 bg-grid-dark mask-radial opacity-70" aria-hidden />
+      <div className="absolute inset-x-0 bottom-0 h-40 -z-10 bg-linear-to-b from-transparent to-ink-950" aria-hidden />
+
+      <motion.div style={{ y: contentY, opacity: contentOpacity }} className="container-x w-full pt-32 pb-20 lg:pt-36 lg:pb-24">
+        <div className="grid lg:grid-cols-12 gap-14 lg:gap-10 items-center">
+          {/* Copy */}
+          <div className="lg:col-span-7 flex flex-col items-start">
+            <motion.span
+              className="pill pill-dark mb-8"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.2 }}
             >
-              حوّل أفكارك إلى{' '}
-              <motion.span
-                style={{
-                  background: 'linear-gradient(135deg,#c9a84c 0%,#e8c97a 40%,#fff7e0 60%,#c9a84c 100%)',
-                  backgroundSize: '200% 200%',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-                animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                واقع رقمي
-              </motion.span>
-            </motion.h1>
+              <span className="live-dot" />
+              وكالة رقمية متخصصة · منذ ٢٠٢٢
+            </motion.span>
 
-            {/* Word cycler line */}
-            <motion.div variants={item}
-              className="flex items-center justify-center gap-3 mb-5"
-              style={{ fontSize: 'clamp(1.3rem, 3vw, 2rem)', fontWeight: 700, color: '#f5f0e8' }}
+            <h1 className="t-display text-fg-inv mb-6">
+              <SplitWords text="حوّل أفكارك إلى" inView={false} delay={0.3} className="block" />
+              <SplitWords text="واقع رقمي." inView={false} delay={0.5} className="block" wordClassName="text-gold" />
+            </h1>
+
+            <motion.p
+              className="font-display text-[clamp(1.25rem,2.2vw,1.75rem)] font-medium text-fg-inv-muted mb-6 flex flex-wrap items-baseline gap-x-2.5"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.8 }}
             >
               <WordCycler />
-              <span style={{ color: 'rgba(245,240,232,0.5)' }}>لدعم نمو أعمالك</span>
-            </motion.div>
-
-            {/* Tagline */}
-            <motion.p variants={item}
-              className="mb-10 tracking-[0.22em] text-sm md:text-base"
-              style={{ color: 'rgba(245,240,232,0.38)' }}
-            >
-              تطوير أعمال &nbsp;·&nbsp; برمجة &nbsp;·&nbsp; تسويق
+              <span>لدعم نمو أعمالك</span>
             </motion.p>
 
-            {/* Divider line */}
-            <motion.div variants={item} className="flex justify-center mb-10">
-              <motion.div
-                className="h-px w-32"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.6), transparent)' }}
-                animate={{ scaleX: [0.5, 1.3, 0.5], opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            </motion.div>
-
-            {/* Bullets */}
-            <motion.div variants={item} className="flex flex-col items-center gap-3 mb-10">
-              {[
-                'تسليم المشاريع في الوقت المحدد دائماً',
-                'دعم فني متكامل ٢٤ ساعة طوال العام',
-                'فريق متخصص في البرمجة والتسويق الرقمي',
-              ].map((t, i) => (
-                <motion.div key={t}
-                  initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{ delay: 1.2 + i * 0.15, duration: 0.6 }}
-                  className="flex items-center justify-center gap-2.5"
-                  whileHover={{ scale: 1.03 }}
-                >
-                  <motion.div
-                    whileHover={{ rotate: 10, scale: 1.3 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
-                  >
-                    <CheckCircle className="w-4 h-4 shrink-0" style={{ color: '#c9a84c' }} />
-                  </motion.div>
-                  <span className="text-sm md:text-base" style={{ color: 'rgba(245,240,232,0.62)' }}>{t}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* CTAs */}
-            <motion.div variants={item} className="flex flex-wrap gap-4 justify-center mb-16">
-              <motion.a
-                href="#contact"
-                onClick={e => { e.preventDefault(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }}
-                className="group relative inline-flex items-center gap-2.5 px-9 py-4 rounded-xl text-base font-bold text-white overflow-hidden"
-                style={{
-                  background: 'linear-gradient(135deg,#c9a84c 0%,#e8c97a 50%,#a07830 100%)',
-                  boxShadow: '0 0 48px rgba(201,168,76,0.45), 0 4px 24px rgba(0,0,0,0.4)',
-                }}
-                whileHover={{ scale: 1.07, boxShadow: '0 0 80px rgba(201,168,76,0.65), 0 8px 32px rgba(0,0,0,0.5)' }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 18 }}
-              >
-                {/* Shimmer */}
-                <motion.span className="absolute inset-0"
-                  style={{ background: 'linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.3) 50%,transparent 65%)' }}
-                  animate={{ x: ['-130%', '240%'] }}
-                  transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 1.5, ease: 'easeInOut' }}
-                />
-                <span className="relative">ابدأ مشروعك التقني</span>
-                <ArrowLeft className="w-4 h-4 relative transition-transform group-hover:-translate-x-1.5" />
-              </motion.a>
-
-              <motion.a
-                href="#projects"
-                onClick={e => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }) }}
-                className="inline-flex items-center gap-2 px-9 py-4 rounded-xl text-base font-semibold"
-                style={{
-                  border: '1px solid rgba(245,240,232,0.15)',
-                  color: 'rgba(245,240,232,0.7)',
-                  background: 'rgba(255,255,255,0.04)',
-                }}
-                whileHover={{
-                  background: 'rgba(255,255,255,0.09)',
-                  borderColor: 'rgba(201,168,76,0.5)',
-                  color: '#f5f0e8',
-                  scale: 1.05,
-                }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 18 }}
-              >
-                شاهد أعمالنا
-              </motion.a>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 28 }}
+            <motion.p
+              className="t-lead text-fg-inv-muted max-w-[34rem] mb-10"
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.7, duration: 0.9 }}
-              className="flex flex-wrap justify-center gap-10 pt-8"
-              style={{ borderTop: '1px solid rgba(201,168,76,0.12)' }}
+              transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.9 }}
             >
-              {[
-                { to: 50, suffix: '+', label: 'مشروع مُنجز' },
-                { to: 40, suffix: '+', label: 'عميل سعيد' },
-                { to: 3,  suffix: '+', label: 'سنوات خبرة' },
-                { to: 98, suffix: '%', label: 'رضا العملاء' },
-              ].map((s, i) => (
-                <motion.div key={s.label}
-                  className="flex flex-col items-center gap-1"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.8 + i * 0.1, duration: 0.6 }}
-                  whileHover={{ y: -5, scale: 1.08 }}
-                >
-                  <span className="text-3xl md:text-4xl font-black"
-                    style={{
-                      background: 'linear-gradient(135deg,#c9a84c,#e8c97a)',
-                      WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                    }}
-                  >
-                    <AnimCounter to={s.to} suffix={s.suffix} />
-                  </span>
-                  <span className="text-xs" style={{ color: 'rgba(245,240,232,0.38)' }}>{s.label}</span>
-                </motion.div>
-              ))}
+              نصمّم ونطوّر المواقع والتطبيقات والمتاجر الإلكترونية، ونقود تسويقها الرقمي — بفريق واحد
+              يهتم بكل تفصيلة من الفكرة حتى الإطلاق وما بعده.
+            </motion.p>
+
+            <motion.div
+              className="w-full flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-12"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: EASE_OUT, delay: 1 }}
+            >
+              <ButtonLink href="#contact" size="lg" className="w-full sm:w-auto">ابدأ مشروعك التقني</ButtonLink>
+              <ButtonLink href="#projects" size="lg" variant="ghost-dark" icon={null} className="w-full sm:w-auto">شاهد أعمالنا</ButtonLink>
             </motion.div>
 
-          </motion.div>
+            <motion.ul
+              className="flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-3"
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 1.15 } } }}
+            >
+              {bullets.map(t => (
+                <motion.li
+                  key={t}
+                  className="flex items-center gap-2.5 text-[0.9rem] text-fg-inv-subtle"
+                  variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE_OUT } } }}
+                >
+                  <span className="grid place-items-center w-5 h-5 rounded-full bg-gold-500/15 text-gold-400 shrink-0">
+                    <Check className="w-3 h-3" strokeWidth={3} aria-hidden />
+                  </span>
+                  {t}
+                </motion.li>
+              ))}
+            </motion.ul>
+          </div>
+
+          {/* Visual */}
+          <div className="lg:col-span-5">
+            <HeroVisual sx={sx} sy={sy} />
+          </div>
         </div>
+      </motion.div>
 
-        {/* Scroll hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.5 }}
-          className="absolute bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-            className="w-5 h-9 rounded-full border-2 flex items-start justify-center pt-2"
-            style={{ borderColor: 'rgba(201,168,76,0.4)' }}
-          >
-            <motion.div className="w-1 h-2 rounded-full" style={{ background: '#c9a84c' }}
-              animate={{ opacity: [1, 0.2, 1], scaleY: [1, 0.4, 1] }}
-              transition={{ duration: 1.8, repeat: Infinity }}
-            />
-          </motion.div>
-        </motion.div>
-
-      </section>
-    </>
+      {/* Scroll cue */}
+      <motion.button
+        type="button"
+        onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+        className="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 flex-col items-center gap-3 text-[0.75rem] text-fg-inv-subtle bg-transparent border-0 cursor-pointer"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.8, duration: 0.8 }}
+        aria-label="انتقل للقسم التالي"
+      >
+        <span className="relative block w-px h-10 bg-white/15 overflow-hidden">
+          <span className="absolute inset-x-0 top-0 h-1/2 bg-gold-400 animate-[scrollcue_2.2s_ease-in-out_infinite]" />
+        </span>
+      </motion.button>
+    </section>
   )
 }

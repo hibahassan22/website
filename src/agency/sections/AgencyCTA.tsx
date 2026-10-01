@@ -1,136 +1,115 @@
-import { useRef } from 'react'
-import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion'
-import { Phone, ArrowLeft } from 'lucide-react'
+import type { PointerEvent, ReactNode } from 'react'
+import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { Phone, ArrowLeft, Mail, MessageCircle } from 'lucide-react'
+import heroBg from '../../assets/imgi_90_WhatsApp-Image-2026-08-18-at-4.33.07-PM.jpg'
+import { SplitWords, Reveal } from '../components/ui/Reveal'
+import { ButtonLink } from '../components/ui/Button'
+
+function Magnetic({ children }: { children: ReactNode }) {
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const sx = useSpring(x, { stiffness: 220, damping: 18, mass: 0.4 })
+  const sy = useSpring(y, { stiffness: 220, damping: 18, mass: 0.4 })
+  const onMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse') return
+    const r = e.currentTarget.getBoundingClientRect()
+    x.set((e.clientX - r.left - r.width / 2) * 0.25)
+    y.set((e.clientY - r.top - r.height / 2) * 0.35)
+  }
+  const reset = () => { x.set(0); y.set(0) }
+  return (
+    <motion.div style={{ x: sx, y: sy }} onPointerMove={onMove} onPointerLeave={reset} className="w-full sm:w-auto">
+      {children}
+    </motion.div>
+  )
+}
+
+function trackGlow(e: PointerEvent<HTMLDivElement>) {
+  const el = e.currentTarget
+  const r = el.getBoundingClientRect()
+  el.style.setProperty('--gx', `${e.clientX - r.left}px`)
+  el.style.setProperty('--gy', `${e.clientY - r.top}px`)
+}
+
+const contacts = [
+  { icon: MessageCircle, label: 'واتساب',          value: '+966 53 628 2377', href: 'https://wa.me/966536282377' },
+  { icon: Phone,         label: 'اتصل بنا',        value: '+20 107 089 9672', href: 'tel:+201070899672' },
+  { icon: Mail,          label: 'البريد الإلكتروني', value: 'adlexagency@gmail.com', href: 'mailto:adlexagency@gmail.com' },
+]
 
 export default function AgencyCTA() {
-  const ref    = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
-  const mx = useMotionValue(0); const my = useMotionValue(0)
-  const sx = useSpring(mx, { stiffness: 40, damping: 22 })
-  const sy = useSpring(my, { stiffness: 40, damping: 22 })
-
-  const handleMove = (e: React.MouseEvent) => {
-    const r = ref.current?.getBoundingClientRect(); if (!r) return
-    mx.set(e.clientX - r.left - r.width / 2)
-    my.set(e.clientY - r.top - r.height / 2)
-  }
-
   return (
-    <section id="contact" ref={ref}
-      className="relative overflow-hidden py-24 px-6"
-      style={{ background: 'linear-gradient(135deg,#0e0c08 0%,#1c1608 50%,#0e0c08 100%)' }}
-      onMouseMove={handleMove}
-    >
-      {/* Mouse glow */}
-      <motion.div className="pointer-events-none absolute inset-0"
-        style={{ background: useTransform([
-          useTransform(sx, [-600, 600], ['35%', '65%']),
-          useTransform(sy, [-400, 400], ['35%', '65%']),
-        ], ([gx, gy]) => `radial-gradient(ellipse 55% 55% at ${gx} ${gy}, rgba(201,168,76,0.18) 0%, transparent 65%)`) }}
-      />
-
-      {/* Orbiting rings */}
-      {[300, 450, 600].map((sz, i) => (
-        <motion.div key={i} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{ width: sz, height: sz, border: `1px ${i === 1 ? 'dashed' : 'solid'} rgba(201,168,76,${0.08 - i * 0.02})` }}
-          animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-          transition={{ duration: 20 + i * 8, repeat: Infinity, ease: 'linear' }} />
-      ))}
-
-      {/* Corner glows */}
-      <motion.div className="pointer-events-none absolute top-0 right-0 w-72 h-72 rounded-full"
-        style={{ background: 'radial-gradient(circle,rgba(201,168,76,0.2) 0%,transparent 70%)', filter: 'blur(50px)' }}
-        animate={{ opacity: [0.3, 0.8, 0.3], scale: [1, 1.2, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
-      <motion.div className="pointer-events-none absolute bottom-0 left-0 w-64 h-64 rounded-full"
-        style={{ background: 'radial-gradient(circle,rgba(232,201,122,0.15) 0%,transparent 70%)', filter: 'blur(40px)' }}
-        animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.25, 1] }}
-        transition={{ duration: 6, delay: 2, repeat: Infinity, ease: 'easeInOut' }} />
-
-      {/* Grid */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{ backgroundImage: 'linear-gradient(rgba(201,168,76,0.4) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.4) 1px,transparent 1px)', backgroundSize: '55px 55px' }} />
-
-      {/* Particles */}
-      {Array.from({ length: 20 }, (_, i) => ({ x: `${5+(i*19)%90}%`, y: `${5+(i*23)%90}%`, s: 1.5+(i%3), dur: 4+(i%5), del: (i*0.38)%6 }))
-        .map((p, i) => (
-          <motion.div key={i} className="pointer-events-none absolute rounded-full"
-            style={{ left:p.x, top:p.y, width:p.s, height:p.s, background:i%2===0?'rgba(201,168,76,0.9)':'rgba(232,201,122,0.6)', boxShadow:'0 0 6px rgba(201,168,76,0.6)' }}
-            animate={{ y:[0,-28,0], opacity:[0,1,0], scale:[0.3,1,0.3] }}
-            transition={{ duration:p.dur, delay:p.del, repeat:Infinity, ease:'easeInOut' }} />
-        ))}
-
-      <div className="ag-inner relative z-10">
+    <section id="contact" className="relative bg-paper py-[clamp(4rem,8vw,7rem)]">
+      <div className="container-x">
         <motion.div
-          initial={{ opacity: 0, y: 40, filter: 'blur(12px)' }}
-          animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-3xl overflow-hidden p-10 md:p-16"
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(201,168,76,0.2)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 0 100px rgba(201,168,76,0.08), inset 0 1px 0 rgba(255,255,255,0.06)',
-          }}
+          onPointerMove={trackGlow}
+          className="relative isolate overflow-hidden rounded-[32px] sm:rounded-[40px] bg-ink-950 text-fg-inv grain [--gx:70%] [--gy:20%]"
+          initial={{ opacity: 0, y: 40, scale: 0.98 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
         >
-          {/* Inner glow */}
-          <div className="pointer-events-none absolute inset-0"
-            style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 0%,rgba(201,168,76,0.1),transparent 60%)' }} />
+          <img src={heroBg} alt="" loading="lazy" decoding="async" className="absolute inset-0 -z-20 w-full h-full object-cover opacity-[0.18]" aria-hidden />
+          <div className="absolute inset-0 -z-10 bg-grid-dark mask-radial opacity-70" aria-hidden />
+          <div
+            className="absolute inset-0 -z-10 transition-opacity duration-500"
+            style={{ background: 'radial-gradient(600px circle at var(--gx) var(--gy), rgba(212,169,79,0.18), transparent 60%)' }}
+            aria-hidden
+          />
+          <div className="absolute -z-10 -bottom-1/2 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-gold-500/[0.12] blur-[120px]" aria-hidden />
 
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
-            {/* Left */}
-            <div className="flex flex-col gap-4 md:max-w-lg text-center md:text-right">
-              {/* Phone icon */}
-              <motion.div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto md:mr-0 md:ml-auto"
-                style={{ background: 'linear-gradient(135deg,#c9a84c,#a07830)', boxShadow: '0 0 30px rgba(201,168,76,0.5)' }}
-                animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.05, 1] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <Phone className="w-7 h-7 text-white" />
-              </motion.div>
+          <div className="px-6 sm:px-12 lg:px-20 pt-16 sm:pt-24 pb-10 sm:pb-12">
+            <Reveal>
+              <span className="pill pill-dark mb-8">
+                <span className="live-dot" />
+                تسعير مرن يناسب أهدافك وميزانيتك
+              </span>
+            </Reveal>
 
-              <motion.h2 className="text-3xl md:text-5xl font-black leading-tight" style={{ color: '#f5f0e8' }}>
-                تسعير مرن يناسب{' '}
-                <motion.span
-                  style={{ background: 'linear-gradient(135deg,#c9a84c,#e8c97a,#c9a84c)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
-                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
-                  أهدافك وميزانيتك
-                </motion.span>
-              </motion.h2>
+            <h2 className="font-display font-bold tracking-[-0.02em] leading-[1.12] text-[clamp(2.6rem,7.5vw,6.25rem)] mb-8">
+              <SplitWords text="لديك فكرة؟" className="block text-fg-inv" />
+              <SplitWords text="لنصنع منها شيئاً استثنائياً." className="block" wordClassName="text-gold" delay={0.2} />
+            </h2>
 
-              <p className="text-base leading-relaxed" style={{ color: 'rgba(245,240,232,0.55)' }}>
-                مهما كانت أهداف نشاطك التجاري، نضمن لك استخداماً أمثل لميزانيتك التسويقية وعائداً ينعكس مباشرة على نمو أعمالك.
-              </p>
+            <div className="grid lg:grid-cols-12 gap-10 items-end">
+              <Reveal className="lg:col-span-6" delay={0.1}>
+                <p className="t-lead text-fg-inv-muted max-w-xl">
+                  مهما كانت أهداف نشاطك التجاري، نضمن لك استخداماً أمثل لميزانيتك التسويقية وعائداً
+                  ينعكس مباشرة على نمو أعمالك.
+                </p>
+              </Reveal>
+              <Reveal className="lg:col-span-6 flex flex-wrap gap-3 lg:justify-end" delay={0.15}>
+                <Magnetic>
+                  <a href="https://wa.me/966536282377" target="_blank" rel="noreferrer" className="btn btn-primary btn-lg w-full sm:w-auto">
+                    <span>اطلب عرض سعر</span>
+                    <ArrowLeft className="btn-icon w-5 h-5" aria-hidden />
+                  </a>
+                </Magnetic>
+                <ButtonLink href="tel:+201070899672" size="lg" variant="ghost-dark" icon={null} leadingIcon={Phone} className="w-full sm:w-auto">
+                  اتصل بنا الآن
+                </ButtonLink>
+              </Reveal>
             </div>
+          </div>
 
-            {/* Right — CTA buttons */}
-            <div className="flex flex-col gap-4 shrink-0">
-              <motion.a href="https://wa.me/966536282377" target="_blank" rel="noreferrer"
-                className="group relative inline-flex items-center gap-2.5 px-8 py-4 rounded-xl text-base font-bold text-white overflow-hidden"
-                style={{ background: 'linear-gradient(135deg,#c9a84c,#e8c97a,#a07830)', boxShadow: '0 0 40px rgba(201,168,76,0.45)' }}
-                whileHover={{ scale: 1.07, boxShadow: '0 0 75px rgba(201,168,76,0.7)' }}
-                whileTap={{ scale: 0.95 }} transition={{ type: 'spring', stiffness: 300, damping: 16 }}
+          <div className="grid sm:grid-cols-3 border-t border-white/[0.08] mx-6 sm:mx-12 lg:mx-20 mb-6 sm:mb-8">
+            {contacts.map(({ icon: Icon, label, value, href }) => (
+              <a
+                key={label}
+                href={href}
+                target={href.startsWith('http') ? '_blank' : undefined}
+                rel={href.startsWith('http') ? 'noreferrer' : undefined}
+                className="group flex items-center gap-4 py-6 sm:px-6 first:sm:ps-0 border-b sm:border-b-0 sm:border-e last:border-0 border-white/[0.08]"
               >
-                <motion.span className="absolute inset-0"
-                  style={{ background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.32) 50%,transparent 70%)' }}
-                  animate={{ x: ['-130%', '240%'] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.8, ease: 'easeInOut' }} />
-                <span className="relative">اطلب عرض سعر</span>
-                <ArrowLeft className="w-4 h-4 relative transition-transform group-hover:-translate-x-1.5" />
-              </motion.a>
-
-              <motion.a href="tel:+201070899672"
-                className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl text-base font-semibold"
-                style={{ border: '1px solid rgba(201,168,76,0.3)', color: 'rgba(245,240,232,0.7)', background: 'rgba(255,255,255,0.04)' }}
-                whileHover={{ borderColor: 'rgba(201,168,76,0.6)', color: '#f5f0e8', scale: 1.05, background: 'rgba(255,255,255,0.08)' }}
-                whileTap={{ scale: 0.95 }} transition={{ type: 'spring', stiffness: 300, damping: 16 }}
-              >
-                <Phone className="w-4 h-4" />
-                اتصل بنا الآن
-              </motion.a>
-            </div>
+                <span className="grid place-items-center w-10 h-10 rounded-full border border-white/10 text-gold-400 transition-colors group-hover:bg-gold-500 group-hover:text-ink-950 group-hover:border-transparent shrink-0">
+                  <Icon className="w-4 h-4" aria-hidden />
+                </span>
+                <span className="flex flex-col min-w-0">
+                  <span className="text-[0.78rem] text-fg-inv-subtle">{label}</span>
+                  <span className="text-[0.95rem] text-fg-inv truncate group-hover:text-gold-300 transition-colors"><bdi dir="ltr">{value}</bdi></span>
+                </span>
+              </a>
+            ))}
           </div>
         </motion.div>
       </div>
